@@ -5,10 +5,13 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -30,9 +33,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.util.Calendar;
 
 public class Report extends AppCompatActivity {
-private TextView report_finish;
+    private TextView report_finish;
     private TextView report2;
     private TextView report3;
     private TextView report4;
@@ -44,11 +48,13 @@ private TextView report_finish;
     private TextView report10;
     private TextView report11;
     private TextView report12;
-    private Button  btn_save;
+    private Button btn_save;
+    private Context ctxDealFile;
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {
             "android.permission.READ_EXTERNAL_STORAGE",
-            "android.permission.WRITE_EXTERNAL_STORAGE" };
+            "android.permission.WRITE_EXTERNAL_STORAGE"};
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -106,38 +112,88 @@ private TextView report_finish;
         msg += "\"Q12\":\"" + bundle.getString("Q12") + "\"}";
         saveToFile(msg);
 
-   }
+        try {
+            ctxDealFile = this.createPackageContext("com.zlc.ipanel",
+                    Context.CONTEXT_IGNORE_SECURITY);
+        } catch (PackageManager.NameNotFoundException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+    }
 
 
     public void saveToFile(String msg) {
-        if (Environment.getExternalStorageState().equals(Environment.MEDIA_UNMOUNTED)) {
-            Toast.makeText(this, "No external storage", Toast.LENGTH_SHORT).show();
-        } else {
-            File sdFile = Environment.getExternalStorageDirectory();
-            File saveData = new File(sdFile, "1.json");
-            if(sdFile.exists()) {
-                try {
-                    sdFile.createNewFile();
-                } catch (Exception e) {
+//        if (Environment.getExternalStorageState().equals(Environment.MEDIA_UNMOUNTED)) {
+//            Toast.makeText(this, "No external storage", Toast.LENGTH_SHORT).show();
+//        } else {
+//            File sdFile = Environment.getExternalStorageDirectory();
+//
+//            File file=new File("/data/data/mg.studio.android.survey/2.json");
+//            File saveData = new File(sdFile, "1.json");
+//            if (sdFile.exists()) {
+//                try {
+//                    file.createNewFile();
+//                    sdFile.createNewFile();
+//                } catch (Exception e) {
+//                     e.printStackTrace();
+//                }
+//            }
+//
+//
+//            try {
+//                FileOutputStream fout = new FileOutputStream(saveData);
+//                FileOutputStream fos=new FileOutputStream(file);
+//                fos.write(msg.getBytes());
+//                fout.write(msg.getBytes());
+//                fos.flush();
+//                fos.close();
+//                fout.flush();
+//                fout.close();
+//
+//                Toast.makeText(this, "Data saved", Toast.LENGTH_SHORT).show();
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }
+//
+//    }
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            Calendar calendar = Calendar.getInstance();
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH) + 1;
+            int day = calendar.get(Calendar.DAY_OF_MONTH);
+            int hour = calendar.get(Calendar.HOUR_OF_DAY);
+            int minute = calendar.get(Calendar.MINUTE);
+            int second = calendar.get(Calendar.SECOND);
+            String filename = year + "-" + month + "-" + day + "-" + hour + ":" + minute + ":" + second + ".json";
+            /***********************External storage********************/
+            File sdfile = getExternalFilesDir(null);
+            File savedata = new File(sdfile, filename);
+            FileOutputStream fout = null;
+            /*********************************************************/
+            Log.e("TAG", "Location: " + sdfile);
 
-                }
-            }
-
-
+            /**********************Internal storage********************/
+            FileOutputStream outputStream;
+            /**********************************************************/
             try {
-                FileOutputStream fout = new FileOutputStream(saveData);
+                outputStream = openFileOutput(filename, Context.MODE_PRIVATE);
+                fout = new FileOutputStream(savedata);
+//                for(int i=0; i<12; i++){
+//                    int temp=i+1;
+//                    String input="{Question:"+ temp +",Answer:'"+inputArr[i]+"'}\n";
+//                    fout.write(input.getBytes());
+//                    outputStream.write(input.getBytes());
+//                }
                 fout.write(msg.getBytes());
+                outputStream.write(msg.getBytes());
                 fout.flush();
                 fout.close();
-
-                Toast.makeText(this, "Data saved", Toast.LENGTH_SHORT).show();
+                outputStream.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-
-
-
-        }
-
+    }
 }
+
